@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "perspective-transformer"
-version = "1.0.0"
+version = "1.0.1"
 description = "A GUI tool to apply perspective transformations to images."
 authors = [
     { name = "Jiucheng Zang", email = "zangjiucheng@gmail.com" }
