@@ -194,8 +194,7 @@ class ImageMarker(QMainWindow):
         else:
             print("No transformation has been applied yet.")
 
-# Run the application
-if __name__ == "__main__":
+def main():
     app = QApplication(sys.argv)
     if len(sys.argv) > 1:
         image_path = sys.argv[1]
@@ -209,3 +208,6 @@ if __name__ == "__main__":
     window.show()
     sys.exit(app.exec_())
 
+# Run the application
+if __name__ == "__main__":
+    main()

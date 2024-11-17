@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "perspective-transformer"
+version = "1.0.0"
+description = "A GUI tool to apply perspective transformations to images."
+authors = [
+    { name = "Jiucheng Zang", email = "zangjiucheng@gmail.com" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = [
+    "PySide6",
+    "opencv-python-headless",
+    "numpy"
+]
+
+[project.urls]
+homepage = "https://github.com/zangjiucheng/Perspective-Transformer"
+repository = "https://github.com/zangjiucheng/Perspective-Transformer"
+
+[project.scripts]
+perspective-transformer = "perspective_transformer.main:main"
