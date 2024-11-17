@@ -24,3 +24,7 @@ repository = "https://github.com/zangjiucheng/Perspective-Transformer"
 
 [project.scripts]
 perspective-transformer = "perspective_transformer.main:main"
+
+[tool.pypi]
+repository = "https://pypi.org/project/Perspective-Transformer"
+github = "zangjiucheng/Perspective-Transformer"
