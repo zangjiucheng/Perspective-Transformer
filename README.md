@@ -21,7 +21,7 @@ This project provides a PyQt-based GUI application for marking four points on an
 ## Install Steps
 1. Clone the repository:
 ```bash
-git clone
+git clone https://github.com/zangjiucheng/Perspective-Transformer.git
 ```
 2. Install the required packages:
 ```bash
