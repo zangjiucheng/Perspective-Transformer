@@ -100,6 +100,9 @@ class ImageMarker(QMainWindow):
             self.label.setPixmap(QPixmap.fromImage(q_image).scaled(
                 self.scaled_pixmap.width(), self.scaled_pixmap.height(), Qt.KeepAspectRatio, Qt.SmoothTransformation
             ))
+            if len(self.points) == 4:
+                print("All points selected. Click 'Select Points' to proceed.")
+                self.connect_points()
 
     def select_points(self):
         if len(self.points) == 4:
@@ -107,6 +110,22 @@ class ImageMarker(QMainWindow):
             self.apply_perspective_transform()
         else:
             print("Please select exactly 4 points.")
+
+    def connect_points(self):
+        # Connect the points with lines
+        p1, p2, p3, p4 = self.order_points(self.points)
+        self.cv_image = cv2.line(self.cv_image, tuple(map(int, p1)), tuple(map(int, p2)), (0, 255, 0), 5)
+        self.cv_image = cv2.line(self.cv_image, tuple(map(int, p2)), tuple(map(int, p3)), (0, 255, 0), 5)
+        self.cv_image = cv2.line(self.cv_image, tuple(map(int, p3)), tuple(map(int, p4)), (0, 255, 0), 5)
+        self.cv_image = cv2.line(self.cv_image, tuple(map(int, p4)), tuple(map(int, p1)), (0, 255, 0), 5)
+
+        # Update QLabel with the connected points
+        height, width, channel = self.cv_image.shape
+        bytes_per_line = 3 * width
+        q_image = QImage(self.cv_image.data, width, height, bytes_per_line, QImage.Format_RGB888)
+        self.label.setPixmap(QPixmap.fromImage(q_image).scaled(
+            self.scaled_pixmap.width(), self.scaled_pixmap.height(), Qt.KeepAspectRatio, Qt.SmoothTransformation
+        ))
 
     
     def clear_points(self):
