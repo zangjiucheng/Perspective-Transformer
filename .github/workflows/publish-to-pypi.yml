@@ -27,4 +27,4 @@ jobs:
     - name: Publish to PyPI via Trusted Publisher
       env:
         TWINE_REPOSITORY_URL: https://upload.pypi.org/legacy/
-      run: python -m twine upload dist/*
+      run: python -m twine upload --non-interactive dist/*
