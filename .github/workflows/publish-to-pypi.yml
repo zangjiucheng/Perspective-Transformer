@@ -26,7 +26,5 @@ jobs:
     - name: Build the package
       run: python -m build
 
-    - name: Publish to PyPI via Trusted Publisher
-      env:
-        TWINE_REPOSITORY_URL: https://upload.pypi.org/legacy/
-      run: python -m twine upload --non-interactive dist/*
+    - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
