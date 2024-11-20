@@ -65,6 +65,9 @@ class ImageMarker(QMainWindow):
         self.shortcut_close = QShortcut(QKeySequence("Command+Q"), self)
         self.shortcut_close.activated.connect(self.close)
 
+        self.shortcut_save = QShortcut(QKeySequence("Command+S"), self)
+        self.shortcut_save.activated.connect(self.write_transformed_image)
+
         # Layout
         layout = QVBoxLayout()
         button_layout = QGridLayout()
