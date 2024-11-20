@@ -62,16 +62,16 @@ class ImageMarker(QMainWindow):
         self.write_button.clicked.connect(self.write_transformed_image)
 
         # Add key binding to close the program
-        self.shortcut_close = QShortcut(QKeySequence("Command+Q"), self)
+        self.shortcut_close = QShortcut(QKeySequence("Ctrl+Q"), self)
         self.shortcut_close.activated.connect(self.close)
 
-        self.shortcut_save = QShortcut(QKeySequence("Command+S"), self)
+        self.shortcut_save = QShortcut(QKeySequence("Ctrl+S"), self)
         self.shortcut_save.activated.connect(self.write_transformed_image)
         
-        self.shortcut_preview = QShortcut(QKeySequence("Command+P"), self)
+        self.shortcut_preview = QShortcut(QKeySequence("Ctrl+P"), self)
         self.shortcut_preview.activated.connect(self.preview_transformed_image)
         
-        self.shortcut_select = QShortcut(QKeySequence("Command+Enter"), self)
+        self.shortcut_select = QShortcut(QKeySequence("Ctrl+Return"), self)
         self.shortcut_select.activated.connect(self.select_points)
 
         # Layout
