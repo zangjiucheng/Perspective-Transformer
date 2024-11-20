@@ -67,6 +67,12 @@ class ImageMarker(QMainWindow):
 
         self.shortcut_save = QShortcut(QKeySequence("Command+S"), self)
         self.shortcut_save.activated.connect(self.write_transformed_image)
+        
+        self.shortcut_preview = QShortcut(QKeySequence("Command+P"), self)
+        self.shortcut_preview.activated.connect(self.preview_transformed_image)
+        
+        self.shortcut_select = QShortcut(QKeySequence("Command+Enter"), self)
+        self.shortcut_select.activated.connect(self.select_points)
 
         # Layout
         layout = QVBoxLayout()
