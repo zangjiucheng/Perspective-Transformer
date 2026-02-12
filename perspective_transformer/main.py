@@ -1,4 +1,5 @@
 import sys
+import argparse
 from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget, QGridLayout
 from PySide6.QtGui import QPixmap, QImage, QShortcut, QKeySequence
 from PySide6.QtCore import Qt
@@ -11,7 +12,12 @@ class ImageMarker(QMainWindow):
         super().__init__()
         self.image_path = image_path
         self.output_path = output_path
+        self.max_side = 1024
         self.points = []  # Store clicked points
+        self.drag_index = None
+        self.magnify_point = None
+        self.magnify_scale = 2.0
+        self.magnify_ratio = 0.15
         self.scale_factor_x = 1  # X-axis scaling factor
         self.scale_factor_y = 1  # Y-axis scaling factor
 
@@ -23,6 +29,11 @@ class ImageMarker(QMainWindow):
     def initUI(self):
         # Load the image using OpenCV
         self.cv_image = cv2.imread(self.image_path)
+        if self.cv_image is None:
+            raise FileNotFoundError(
+                f"Unable to read image at '{self.image_path}'. "
+                "Check the path and file format."
+            )
         self.cv_image = cv2.cvtColor(self.cv_image, cv2.COLOR_BGR2RGB)
         self.original_image = self.cv_image.copy()
         height, width, channel = self.cv_image.shape
@@ -46,7 +57,11 @@ class ImageMarker(QMainWindow):
         # Create QLabel to display image
         self.label = QLabel()
         self.label.setPixmap(self.scaled_pixmap)
-        self.label.mousePressEvent = self.mouse_click  # Bind mouse click event
+        self.label.setMouseTracking(True)
+        self.label.setCursor(Qt.ArrowCursor)
+        self.label.mousePressEvent = self.mouse_press  # Bind mouse click event
+        self.label.mouseMoveEvent = self.mouse_move
+        self.label.mouseReleaseEvent = self.mouse_release
 
         # Add buttons
         self.confirm_button = QPushButton("Select Points")
@@ -74,6 +89,9 @@ class ImageMarker(QMainWindow):
         self.shortcut_select = QShortcut(QKeySequence("Ctrl+Return"), self)
         self.shortcut_select.activated.connect(self.select_points)
 
+        self.shortcut_clear = QShortcut(QKeySequence("Ctrl+L"), self)
+        self.shortcut_clear.activated.connect(self.clear_points)
+
         # Layout
         layout = QVBoxLayout()
         button_layout = QGridLayout()
@@ -93,25 +111,145 @@ class ImageMarker(QMainWindow):
         self.setWindowTitle("Image Marker")
         self.resize(self.scaled_pixmap.width(), self.scaled_pixmap.height() + 50)
 
-    def mouse_click(self, event):
-        # Get the click position on the scaled image
-        if event.button() == Qt.LeftButton and len(self.points) < 4:
-            x = event.pos().x() * self.scale_factor_x
-            y = event.pos().y() * self.scale_factor_y
-            self.points.append((int(x), int(y)))
-            print(f"Point {len(self.points)}: ({int(x)}, {int(y)})")
-            
-            # Draw the point on the original image
-            self.cv_image = cv2.circle(self.cv_image, (int(x), int(y)), 15, (255, 0, 0), -1)
-            height, width, channel = self.cv_image.shape
-            bytes_per_line = 3 * width
-            q_image = QImage(self.cv_image.data, width, height, bytes_per_line, QImage.Format_RGB888)
-            self.label.setPixmap(QPixmap.fromImage(q_image).scaled(
-                self.scaled_pixmap.width(), self.scaled_pixmap.height(), Qt.KeepAspectRatio, Qt.SmoothTransformation
-            ))
+    def mouse_press(self, event):
+        if event.button() != Qt.LeftButton:
+            return
+
+        click_point = self._event_to_image_point(event)
+        drag_index = self._find_near_point(click_point)
+        if drag_index is not None:
+            self.drag_index = drag_index
+            return
+
+        if len(self.points) < 4:
+            self.points.append(click_point)
+            print(f"Point {len(self.points)}: ({click_point[0]}, {click_point[1]})")
+            self.redraw_points()
             if len(self.points) == 4:
                 print("All points selected. Click 'Select Points' to proceed.")
-                self.connect_points()
+
+    def mouse_move(self, event):
+        if self.drag_index is None:
+            hover_point = self._event_to_image_point(event)
+            if self._find_near_point(hover_point) is not None:
+                self.label.setCursor(Qt.OpenHandCursor)
+            else:
+                self.label.setCursor(Qt.ArrowCursor)
+            if event.modifiers() & Qt.ControlModifier and self._find_near_point(hover_point) is not None:
+                self.magnify_point = hover_point
+                self.redraw_points()
+            elif self.magnify_point is not None:
+                self.magnify_point = None
+                self.redraw_points()
+            return
+        moved_point = self._event_to_image_point(event)
+        self.points[self.drag_index] = moved_point
+        self.label.setCursor(Qt.ClosedHandCursor)
+        if event.modifiers() & Qt.ControlModifier:
+            self.magnify_point = moved_point
+        elif self.magnify_point is not None:
+            self.magnify_point = None
+        self.redraw_points()
+
+    def mouse_release(self, event):
+        if event.button() == Qt.LeftButton:
+            self.drag_index = None
+            self.magnify_point = None
+            self.label.setCursor(Qt.ArrowCursor)
+            self.redraw_points()
+
+    def _event_to_image_point(self, event):
+        x = int(event.pos().x() * self.scale_factor_x)
+        y = int(event.pos().y() * self.scale_factor_y)
+        return (x, y)
+
+    def _find_near_point(self, point, radius_screen=20):
+        if not self.points:
+            return None
+        radius = int(radius_screen * (self.scale_factor_x + self.scale_factor_y) / 2)
+        radius_sq = radius * radius
+        for idx, existing in enumerate(self.points):
+            dx = existing[0] - point[0]
+            dy = existing[1] - point[1]
+            if dx * dx + dy * dy <= radius_sq:
+                return idx
+        return None
+
+    def redraw_points(self):
+        # Redraw from original so lines stay clean
+        self.cv_image = self.original_image.copy()
+        for idx, point in enumerate(self.points):
+            self.cv_image = cv2.circle(self.cv_image, point, 15, (255, 0, 0), -1)
+            if idx > 0:
+                prev_point = self.points[idx - 1]
+                self.cv_image = cv2.line(self.cv_image, prev_point, point, (0, 255, 0), 5)
+        if len(self.points) == 4:
+            self.cv_image = cv2.line(
+                self.cv_image, self.points[-1], self.points[0], (0, 255, 0), 5
+            )
+        if len(self.points) == 4:
+            overlay = self.cv_image.copy()
+            ordered = self.order_points(self.points)
+            cv2.fillPoly(overlay, [ordered.astype(int)], (0, 255, 0))
+            self.cv_image = cv2.addWeighted(overlay, 0.25, self.cv_image, 0.75, 0)
+        if self.magnify_point is not None:
+            self._draw_magnifier()
+        height, width, channel = self.cv_image.shape
+        bytes_per_line = 3 * width
+        q_image = QImage(self.cv_image.data, width, height, bytes_per_line, QImage.Format_RGB888)
+        self.label.setPixmap(QPixmap.fromImage(q_image).scaled(
+            self.scaled_pixmap.width(), self.scaled_pixmap.height(), Qt.KeepAspectRatio, Qt.SmoothTransformation
+        ))
+
+    def _draw_magnifier(self):
+        x, y = self.magnify_point
+        img_h, img_w = self.cv_image.shape[:2]
+        min_dim_screen = min(self.scaled_pixmap.width(), self.scaled_pixmap.height())
+        radius_screen = int(min_dim_screen * self.magnify_ratio / 2)
+        radius_screen = max(40, min(radius_screen, 200))
+        avg_scale = (self.scale_factor_x + self.scale_factor_y) / 2
+        radius_img = max(8, int(radius_screen * avg_scale))
+        src_radius = max(4, int(radius_img / self.magnify_scale))
+
+        center = (float(x), float(y))
+        src_size = (int(2 * src_radius), int(2 * src_radius))
+        src_patch = cv2.getRectSubPix(self.cv_image, src_size, center)
+        magnified = cv2.resize(
+            src_patch, (int(2 * radius_img), int(2 * radius_img)), interpolation=cv2.INTER_LINEAR
+        )
+
+        x0 = int(x - radius_img)
+        y0 = int(y - radius_img)
+        x1 = x0 + magnified.shape[1]
+        y1 = y0 + magnified.shape[0]
+
+        src_x0 = max(0, -x0)
+        src_y0 = max(0, -y0)
+        dst_x0 = max(0, x0)
+        dst_y0 = max(0, y0)
+        dst_x1 = min(img_w, x1)
+        dst_y1 = min(img_h, y1)
+        src_x1 = src_x0 + (dst_x1 - dst_x0)
+        src_y1 = src_y0 + (dst_y1 - dst_y0)
+
+        if dst_x1 <= dst_x0 or dst_y1 <= dst_y0:
+            return
+
+        patch = magnified[src_y0:src_y1, src_x0:src_x1]
+        mask = np.zeros((patch.shape[0], patch.shape[1]), dtype=np.uint8)
+        cv2.circle(
+            mask,
+            (patch.shape[1] // 2, patch.shape[0] // 2),
+            min(patch.shape[1], patch.shape[0]) // 2,
+            255,
+            -1,
+        )
+        roi = self.cv_image[dst_y0:dst_y1, dst_x0:dst_x1]
+        mask_inv = cv2.bitwise_not(mask)
+        bg = cv2.bitwise_and(roi, roi, mask=mask_inv)
+        fg = cv2.bitwise_and(patch, patch, mask=mask)
+        self.cv_image[dst_y0:dst_y1, dst_x0:dst_x1] = cv2.add(bg, fg)
+        cv2.circle(self.cv_image, (x, y), radius_img, (255, 255, 255), 2)
 
     def select_points(self):
         if len(self.points) == 4:
@@ -140,6 +278,7 @@ class ImageMarker(QMainWindow):
     def clear_points(self):
         # Reset points and reload the original image
         self.points = []
+        self.magnify_point = None
         print("Cleared all points.")
         self.cv_image = self.original_image.copy()
 
@@ -198,6 +337,13 @@ class ImageMarker(QMainWindow):
 
         # Apply the perspective transformation
         self.transformed_image = cv2.warpPerspective(self.original_image, matrix, (width, height))
+        max_dim = max(width, height)
+        if self.max_side and max_dim > self.max_side:
+            scale = self.max_side / max_dim
+            new_size = (int(width * scale), int(height * scale))
+            self.transformed_image = cv2.resize(
+                self.transformed_image, new_size, interpolation=cv2.INTER_AREA
+            )
         print("Transformation applied. Preview the result.")
 
 
@@ -223,16 +369,30 @@ class ImageMarker(QMainWindow):
             print("No transformation has been applied yet.")
 
 def main():
-    app = QApplication(sys.argv)
-    if len(sys.argv) > 1:
-        image_path = sys.argv[1]
-    else:
-        print("Usage: python perspective.py <image_path> [output_path]")
-        sys.exit(1)
-    
-    output_path = sys.argv[2] if len(sys.argv) > 2 else "transformed_image.jpg"
+    parser = argparse.ArgumentParser(description="Perspective transformer")
+    parser.add_argument("image_path", help="Input image path")
+    parser.add_argument(
+        "output_path",
+        nargs="?",
+        default="transformed_image.jpg",
+        help="Output image path",
+    )
+    parser.add_argument(
+        "--max-side",
+        type=int,
+        default=1024,
+        help="Max side length in pixels; only downscale if larger (default: 1024)",
+    )
+    args = parser.parse_args()
 
-    window = ImageMarker(image_path,output_path)
+    app = QApplication(sys.argv)
+
+    try:
+        window = ImageMarker(args.image_path, args.output_path)
+    except FileNotFoundError as exc:
+        print(exc)
+        sys.exit(1)
+    window.max_side = args.max_side
     window.show()
     sys.exit(app.exec_())
 
