@@ -1,17 +1,18 @@
 # Image Perspective Transformer
 
-This project provides a PyQt-based GUI application for marking four points on an image to apply a perspective transformation. Users can preview the transformed image and reselect points if the result is unsatisfactory.
+This project provides a PySide6 GUI for marking four points on an image, applying a perspective transform, and exporting a clean crop for documents (e.g., LaTeX). It supports interactive point editing, live preview, and automatic downscaling to a maximum side length for consistent output sizes.
 
 ---
 
 ## Features
-- Load and Display Image: Load an image and scale it to fit the screen while maintaining its aspect ratio.
-- Mark Points: Click on the image to select four points for transformation.
-- Clear Points: Reset the marked points and start over without restarting the application.
-- Preview Transformation: Display the transformed image and check its quality before saving.
-- Iterative Workflow: If the transformation is not satisfactory, reselect the points and apply the transformation again.
-- Save Image: Save the transformed image to a file.
-- Exit Application: Close the application. (Ctrl+Q / Command+Q)
+- Smart image view: Fit-to-screen display with accurate coordinate mapping.
+- Fast point selection: Click up to four points to define the transform region.
+- Editable points: Drag points to refine corners; lines and area shading update live.
+- Area highlight: The selected quadrilateral is shaded for clear visual feedback.
+- Detail magnifier: Hold Ctrl near a point for a 2x zoom lens on the corner.
+- Preview + export: Preview the transformed image and save to a chosen path.
+- Max-side downscale: Cap output size via `--max-side` (default 1024) for LaTeX-friendly images.
+- Shortcuts: Ctrl+Q to quit, Ctrl+S to save, Ctrl+P to preview, Ctrl+Enter to apply.
 
 ---
 
@@ -19,18 +20,14 @@ This project provides a PyQt-based GUI application for marking four points on an
 - Python 3.7+
 
 ## Install Steps
-1. Clone the repository:
+1. Install from PyPI:
 ```bash
-git clone https://github.com/zangjiucheng/Perspective-Transformer.git
-```
-2. Install the required packages:
-```bash
-pip install -r requirements.txt
+pip install perspective-transformer
 ```
 
-3. Run the application:
+2. Run the application:
 ```bash
-python perspective.py <image_path> [output_path]
+perspective-transformer <image_path> [output_path] [--max-side 1024]
 ```
 
 --- 
@@ -42,15 +39,15 @@ python perspective.py <image_path> [output_path]
     - Start the application:
 
         ```bash
-        python perspective.py <image_path> [output_path]
+        perspective-transformer <image_path> [output_path] [--max-side 1024]
         ```
 2. Mark Points:
 
-    Click on the image to select four points in any order. These points define the region for perspective transformation.
+    Click on the image to select four points in any order. These points define the region for perspective transformation. Drag any point to adjust.
 
 3. Confirm Points:
 
-    After selecting four points, click "Confirm Points" to apply the transformation.
+    After selecting four points, click "Select Points" (or Ctrl+Enter) to apply the transformation.
 
 4. Preview Transformed Image:
 
@@ -59,7 +56,7 @@ python perspective.py <image_path> [output_path]
 
 5. Save Transformed Image:
 
-    When satisfied, the application automatically saves the transformed image as transformed_image.jpg or the specified output path.
+    When satisfied, click "Write Transformed Image" (or Ctrl+S) to save the output as transformed_image.jpg or the specified output path.
 
 --- 
 

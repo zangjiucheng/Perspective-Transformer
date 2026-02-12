@@ -4,14 +4,28 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "perspective-transformer"
-version = "1.0.3"
+version = "1.1.0"
 description = "A GUI tool to apply perspective transformations to images."
 authors = [
     { name = "Jiucheng Zang", email = "zangjiucheng@gmail.com" }
 ]
 license = { text = "MIT" }
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Multimedia :: Graphics",
+]
 dependencies = [
     "PySide6",
     "opencv-python-headless",
@@ -21,9 +35,14 @@ dependencies = [
 [project.urls]
 homepage = "https://github.com/zangjiucheng/Perspective-Transformer"
 repository = "https://github.com/zangjiucheng/Perspective-Transformer"
+documentation = "https://github.com/zangjiucheng/Perspective-Transformer"
+issues = "https://github.com/zangjiucheng/Perspective-Transformer/issues"
 
 [project.scripts]
 perspective-transformer = "perspective_transformer.main:main"
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-cov", "ruff"]
 
 [tool.pypi]
 repository = "https://pypi.org/project/Perspective-Transformer"
