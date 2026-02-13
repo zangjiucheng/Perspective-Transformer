@@ -1,6 +1,14 @@
 # Image Perspective Transformer
+[![PyPI](https://img.shields.io/pypi/v/perspective-transformer.svg)](https://pypi.org/project/perspective-transformer/)
+[![License](https://img.shields.io/pypi/l/perspective-transformer.svg)](https://pypi.org/project/perspective-transformer/)
+[![Python Version](https://img.shields.io/pypi/pyversions/perspective-transformer.svg)](https://pypi.org/project/perspective-transformer/)
+
+<img src="https://raw.githubusercontent.com/zangjiucheng/Perspective-Transformer/refs/heads/main/perspective_transformer/assets/icon.png" alt="App Icon" width="80" height="80" align="left" style="margin-bottom: 12px;" />
+<br clear="left" />
 
 This project provides a PySide6 GUI for marking four points on an image, applying a perspective transform, and exporting a clean crop for documents (e.g., LaTeX). It supports interactive point editing, live preview, and automatic downscaling to a maximum side length for consistent output sizes.
+
+![App Demo](https://raw.githubusercontent.com/zangjiucheng/Perspective-Transformer/refs/heads/main/docs/Perspective-Transform.png)
 
 ---
 
@@ -17,7 +25,7 @@ This project provides a PySide6 GUI for marking four points on an image, applyin
 ---
 
 ## Ensure the following are installed on your system:
-- Python 3.7+
+- Python 3.8+
 
 ## Install Steps
 1. Install from PyPI:

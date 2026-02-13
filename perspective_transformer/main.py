@@ -1,7 +1,8 @@
 import sys
 import argparse
+from pathlib import Path
 from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QPushButton, QVBoxLayout, QWidget, QGridLayout
-from PySide6.QtGui import QPixmap, QImage, QShortcut, QKeySequence
+from PySide6.QtGui import QPixmap, QImage, QShortcut, QKeySequence, QIcon
 from PySide6.QtCore import Qt
 import cv2
 import numpy as np
@@ -159,8 +160,9 @@ class ImageMarker(QMainWindow):
             self.redraw_points()
 
     def _event_to_image_point(self, event):
-        x = int(event.pos().x() * self.scale_factor_x)
-        y = int(event.pos().y() * self.scale_factor_y)
+        pos = event.position()
+        x = int(pos.x() * self.scale_factor_x)
+        y = int(pos.y() * self.scale_factor_y)
         return (x, y)
 
     def _find_near_point(self, point, radius_screen=20):
@@ -386,6 +388,11 @@ def main():
     args = parser.parse_args()
 
     app = QApplication(sys.argv)
+    icon_path = Path(__file__).resolve().parent / "assets" / "icon.png"
+    if not icon_path.is_file():
+        icon_path = Path(__file__).resolve().parent.parent / "assets" / "icon.png"
+    if icon_path.is_file():
+        app.setWindowIcon(QIcon(str(icon_path)))
 
     try:
         window = ImageMarker(args.image_path, args.output_path)
@@ -394,7 +401,7 @@ def main():
         sys.exit(1)
     window.max_side = args.max_side
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 # Run the application
 if __name__ == "__main__":

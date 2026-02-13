@@ -7,7 +7,7 @@ name = "perspective-transformer"
 version = "1.1.0"
 description = "A GUI tool to apply perspective transformations to images."
 authors = [
-    { name = "Jiucheng Zang", email = "zangjiucheng@gmail.com" }
+    { name = "Jiucheng Zang", email = "git.jiucheng@gmail.com" }
 ]
 license = { text = "MIT" }
 readme = "README.md"
@@ -43,6 +43,9 @@ perspective-transformer = "perspective_transformer.main:main"
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov", "ruff"]
+
+[tool.setuptools.package-data]
+perspective_transformer = ["assets/icon.png"]
 
 [tool.pypi]
 repository = "https://pypi.org/project/Perspective-Transformer"
